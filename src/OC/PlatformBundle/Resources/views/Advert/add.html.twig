@@ -2,7 +2,9 @@
 
 {% block body %}
 
-	<h2>Ajouter une annonce</h2>
+	{% block title %}
+		Ajouter une annonce - {{ parent() }}
+	{% endblock %}
 
 	{{ include("OCPlatformBundle:Advert:form.html.twig") }}
 

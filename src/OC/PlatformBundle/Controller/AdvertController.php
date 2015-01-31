@@ -86,6 +86,17 @@ class AdvertController extends Controller
 
 		// Si la requête est en POST, c'est que le visiteur a soumis le formulaire
 		if ($request->isMethod('POST')) {
+			// On récupère le service
+			$antispam = $this->container->get('oc_platform.antispam');
+
+			// Je pars du principe que $text contient le texte d'un message quelconque
+			$text = '...';
+			if ($antispam->isSpam($text)) {
+				throw new \Exception('Votre message a été détecté comme spam !');
+			}
+
+			// Ici le message n'est pas un spam
+
 			// Ici, on s'occupera de la création et de la gestion du formulaire
 
 			$request->getSession()->getFlashBag()->add('notice', 'Annonce bien enregistrée.');
@@ -109,7 +120,17 @@ class AdvertController extends Controller
 			return $this->redirect($this->generateUrl('oc_platform_view', array('id' => 5)));
 		}
 
-		return $this->render('OCPlatformBundle:Advert:edit.html.twig');
+		$advert = array(
+			'title'   => 'Recherche développpeur Symfony2',
+			'id'      => $id,
+			'author'  => 'Alexandre',
+			'content' => 'Nous recherchons un développeur Symfony2 débutant sur Lyon. Blabla…',
+			'date'    => new \Datetime()
+		);
+
+		return $this->render('OCPlatformBundle:Advert:edit.html.twig', array(
+			'advert' => $advert
+		));
 	}
 
 	public function deleteAction($id)
