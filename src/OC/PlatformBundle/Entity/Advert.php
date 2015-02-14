@@ -3,6 +3,7 @@
 namespace OC\PlatformBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Gedmo\Mapping\Annotation as Gedmo;
 
 /**
  * Advert
@@ -53,6 +54,12 @@ class Advert
      * @ORM\Column(name="published", type="boolean")
      */
     private $published = true;
+
+	/**
+	 * @Gedmo\Slug(fields={"title"})
+	 * @ORM\Column(length=128, unique=true)
+	 */
+	private $slug;
 
     /**
      * @ORM\OneToOne(targetEntity="OC\PlatformBundle\Entity\Image", cascade={"persist"})
@@ -292,5 +299,28 @@ class Advert
     public function getApplications()
     {
         return $this->applications;
+    }
+
+    /**
+     * Set slug
+     *
+     * @param string $slug
+     * @return Advert
+     */
+    public function setSlug($slug)
+    {
+        $this->slug = $slug;
+
+        return $this;
+    }
+
+    /**
+     * Get slug
+     *
+     * @return string 
+     */
+    public function getSlug()
+    {
+        return $this->slug;
     }
 }
