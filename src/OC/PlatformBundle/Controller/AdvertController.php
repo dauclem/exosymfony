@@ -101,8 +101,7 @@ class AdvertController extends Controller {
 
 	public function addAction(Request $request) {
 		$advert = new Advert();
-		//$form = $this->get('form.factory')->create(new AdvertType(), $advert);
-		$form = $this->createForm(new AdvertType(), $advert);
+		$form   = $this->createForm(new AdvertType(), $advert);
 
 		if ($form->handleRequest($request)->isValid()) {
 			$em = $this->getDoctrine()->getManager();
@@ -114,6 +113,9 @@ class AdvertController extends Controller {
 			return $this->redirect($this->generateUrl('oc_platform_view', array('id' => $advert->getId())));
 		}
 
+		// À ce stade :
+		// - Soit la requête est de type GET, donc le visiteur vient d'arriver sur la page et veut voir le formulaire
+		// - Soit la requête est de type POST, mais le formulaire n'est pas valide, donc on l'affiche de nouveau
 		return $this->render('OCPlatformBundle:Advert:add.html.twig', array(
 			'form' => $form->createView(),
 		));
@@ -129,63 +131,24 @@ class AdvertController extends Controller {
 			throw new NotFoundHttpException("L'annonce d'id ".$id." n'existe pas.");
 		}
 
-		//$form = $this->get('form.factory')->create(new AdvertType(), $advert);
 		$form = $this->createForm(new AdvertEditType(), $advert);
 
 		if ($form->handleRequest($request)->isValid()) {
-			$em = $this->getDoctrine()->getManager();
-			$em->persist($advert);
+			// Inutile de persister ici, Doctrine connait déjà notre annonce
 			$em->flush();
 
-			$request->getSession()->getFlashBag()->add('notice', 'Annonce bien enregistrée.');
+			$request->getSession()->getFlashBag()->add('notice', 'Annonce bien modifiée.');
 
 			return $this->redirect($this->generateUrl('oc_platform_view', array('id' => $advert->getId())));
 		}
 
 		return $this->render('OCPlatformBundle:Advert:edit.html.twig', array(
-			'form' => $form->createView(),
-			'advert' => $advert
-		));
-
-
-
-
-
-		// La méthode findAll retourne toutes les catégories de la base de données
-		$listCategories = $em->getRepository('OCPlatformBundle:Category')->findAll();
-
-		// On boucle sur les catégories pour les lier à l'annonce
-		foreach ($listCategories as $category) {
-			$advert->addCategory($category);
-		}
-
-		// Pour persister le changement dans la relation, il faut persister l'entité propriétaire
-		// Ici, Advert est le propriétaire, donc inutile de la persister car on l'a récupérée depuis Doctrine
-
-		// Étape 2 : On déclenche l'enregistrement
-		$em->flush();
-
-		// Même mécanisme que pour l'ajout
-		if ($request->isMethod('POST')) {
-			$request->getSession()->getFlashBag()->add('notice', 'Annonce bien modifiée.');
-
-			return $this->redirect($this->generateUrl('oc_platform_view', array('id' => 5)));
-		}
-
-		$advert = array(
-			'title'   => 'Recherche développpeur Symfony2',
-			'id'      => $id,
-			'author'  => 'Alexandre',
-			'content' => 'Nous recherchons un développeur Symfony2 débutant sur Lyon. Blabla…',
-			'date'    => new \Datetime()
-		);
-
-		return $this->render('OCPlatformBundle:Advert:edit.html.twig', array(
-			'advert' => $advert
+			'form'   => $form->createView(),
+			'advert' => $advert // Je passe également l'annonce à la vue si jamais elle veut l'afficher
 		));
 	}
 
-	public function deleteAction($id) {
+	public function deleteAction($id, Request $request) {
 		$em = $this->getDoctrine()->getManager();
 
 		// On récupère l'annonce $id
@@ -195,20 +158,24 @@ class AdvertController extends Controller {
 			throw new NotFoundHttpException("L'annonce d'id ".$id." n'existe pas.");
 		}
 
-		// On boucle sur les catégories de l'annonce pour les supprimer
-		foreach ($advert->getCategories() as $category) {
-			$advert->removeCategory($category);
+		// On crée un formulaire vide, qui ne contiendra que le champ CSRF
+		// Cela permet de protéger la suppression d'annonce contre cette faille
+		$form = $this->createFormBuilder()->getForm();
+
+		if ($form->handleRequest($request)->isValid()) {
+			$em->remove($advert);
+			$em->flush();
+
+			$request->getSession()->getFlashBag()->add('info', "L'annonce a bien été supprimée.");
+
+			return $this->redirect($this->generateUrl('oc_platform_home'));
 		}
 
-		// Pour persister le changement dans la relation, il faut persister l'entité propriétaire
-		// Ici, Advert est le propriétaire, donc inutile de la persister car on l'a récupérée depuis Doctrine
-
-		// On déclenche la modification
-		$em->flush();
-
-		// Ici, on gérera la suppression de l'annonce en question
-
-		return $this->render('OCPlatformBundle:Advert:delete.html.twig');
+		// Si la requête est en GET, on affiche une page de confirmation avant de supprimer
+		return $this->render('OCPlatformBundle:Advert:delete.html.twig', array(
+			'advert' => $advert,
+			'form'   => $form->createView()
+		));
 	}
 
 	public function editImageAction($advertId) {

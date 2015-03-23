@@ -1,4 +1,5 @@
 <?php
+// src/OC/PlatformBundle/Form/AdvertType.php
 
 namespace OC\PlatformBundle\Form;
 
@@ -6,59 +7,38 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
-use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
 class AdvertType extends AbstractType {
-	/**
-	 * @param FormBuilderInterface $builder
-	 * @param array                $options
-	 */
 	public function buildForm(FormBuilderInterface $builder, array $options) {
 		$builder
 			->add('date', 'date')
 			->add('title', 'text')
 			->add('author', 'text')
 			->add('content', 'textarea')
-			->add('published', 'checkbox', array('required' => false))
 			->add('image', new ImageType())
-			/*
-			   * Rappel :
-			   ** - 1er argument : nom du champ, ici « categories », car c'est le nom de l'attribut
-			   ** - 2e argument : type du champ, ici « collection » qui est une liste de quelque chose
-			   ** - 3e argument : tableau d'options du champ
-			   */
-			/*
-			->add('categories', 'collection', array(
-				'type'         => new CategoryType(),
-				'allow_add'    => true,
-				'allow_delete' => true
-			))
-			*/
 			->add('categories', 'entity', array(
 				'class'    => 'OCPlatformBundle:Category',
 				'property' => 'name',
-				'multiple' => true
+				'multiple' => true,
+				'expanded' => false
 			))
 			->add('save', 'submit');
 
-		// On ajoute une fonction qui va écouter un évènement
+		// On ajoute une fonction qui va écouter l'évènement PRE_SET_DATA
 		$builder->addEventListener(
-			FormEvents::PRE_SET_DATA,    // 1er argument : L'évènement qui nous intéresse : ici, PRE_SET_DATA
-			function(FormEvent $event) { // 2e argument : La fonction à exécuter lorsque l'évènement est déclenché
+			FormEvents::PRE_SET_DATA,
+			function (FormEvent $event) {
 				// On récupère notre objet Advert sous-jacent
 				$advert = $event->getData();
 
-				// Cette condition est importante, on en reparle plus loin
 				if (null === $advert) {
-					return; // On sort de la fonction sans rien faire lorsque $advert vaut null
+					return;
 				}
 
 				if (!$advert->getPublished() || null === $advert->getId()) {
-					// Si l'annonce n'est pas publiée, ou si elle n'existe pas encore en base (id est null),
-					// alors on ajoute le champ published
 					$event->getForm()->add('published', 'checkbox', array('required' => false));
 				} else {
-					// Sinon, on le supprime
 					$event->getForm()->remove('published');
 				}
 			}
@@ -66,9 +46,9 @@ class AdvertType extends AbstractType {
 	}
 
 	/**
-	 * @param OptionsResolver $resolver
+	 * @param OptionsResolverInterface $resolver
 	 */
-	public function configureOptions(OptionsResolver $resolver) {
+	public function setDefaultOptions(OptionsResolverInterface $resolver) {
 		$resolver->setDefaults(array(
 								   'data_class' => 'OC\PlatformBundle\Entity\Advert'
 							   ));
