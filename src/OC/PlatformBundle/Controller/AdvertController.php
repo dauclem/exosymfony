@@ -14,6 +14,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
 class AdvertController extends Controller {
 	public function menuAction($limit = 3) {
@@ -99,6 +100,9 @@ class AdvertController extends Controller {
 		));
 	}
 
+	/**
+	 * @Security("has_role('ROLE_AUTEUR')")
+	 */
 	public function addAction(Request $request) {
 		$advert = new Advert();
 		$form   = $this->createForm(new AdvertType(), $advert);
