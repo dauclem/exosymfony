@@ -1,7 +1,11 @@
 services:
     oc_platform.antispam:
         class: OC\PlatformBundle\Antispam\OCAntispam
-        arguments: [@mailer, %locale%, 50]
+        arguments: [@mailer, 50]
+        calls:
+            - [ setLocale, [ %locale% ] ]
+        tags:
+            -  { name: twig.extension }
 
     oc_platform.validator.antiflood:                              # Le nom du service
         class: OC\PlatformBundle\Validator\AntifloodValidator     # La classe du service, ici notre validateur déjà créé
