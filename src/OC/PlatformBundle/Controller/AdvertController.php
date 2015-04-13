@@ -108,6 +108,16 @@ class AdvertController extends Controller {
 		$form   = $this->createForm(new AdvertType(), $advert);
 
 		if ($form->handleRequest($request)->isValid()) {
+			// On crée l'évènement avec ses 2 arguments
+			$event = new MessagePostEvent($advert->getContent(), $advert->getUser());
+			// On déclenche l'évènement
+			$this
+				->get('event_dispatcher')
+				->dispatch(BigbrotherEvents::onMessagePost, $event)
+			;
+			// On récupère ce qui a été modifié par le ou les listeners, ici le message
+			$advert->setContent($event->getMessage());
+
 			$em = $this->getDoctrine()->getManager();
 			$em->persist($advert);
 			$em->flush();
