@@ -71,13 +71,11 @@ class AdvertController extends Controller {
 		));
 	}
 
-	public function viewAction($id) {
+	/**
+	 * @ParamConverter("advert", options={"mapping": {"advert_id": "id"}})
+	 */
+	public function viewAction(Advert $advert, $id) {
 		$em = $this->getDoctrine()->getManager();
-
-		// On récupère l'annonce $id
-		$advert = $em
-			->getRepository('OCPlatformBundle:Advert')
-			->find($id);
 
 		if (null === $advert) {
 			throw new NotFoundHttpException("L'annonce d'id ".$id." n'existe pas.");
@@ -113,8 +111,7 @@ class AdvertController extends Controller {
 			// On déclenche l'évènement
 			$this
 				->get('event_dispatcher')
-				->dispatch(BigbrotherEvents::onMessagePost, $event)
-			;
+				->dispatch(BigbrotherEvents::onMessagePost, $event);
 			// On récupère ce qui a été modifié par le ou les listeners, ici le message
 			$advert->setContent($event->getMessage());
 
@@ -209,5 +206,11 @@ class AdvertController extends Controller {
 		$em->flush();
 
 		return new Response('OK');
+	}
+
+	public function translationAction($name) {
+		return $this->render('OCPlatformBundle:Advert:translation.html.twig', array(
+			'name' => $name
+		));
 	}
 }
